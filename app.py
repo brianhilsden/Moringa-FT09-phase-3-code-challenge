@@ -7,6 +7,8 @@ from models.magazine import Magazine
 def main():
     # Initialize the database and create tables
     create_tables()
+    print(Article.get_all_articles(get_db_connection()))
+
 
     # Collect user input
     author_name = input("Enter author's name: ")
@@ -26,45 +28,37 @@ def main():
     '''
 
     # Create an author
-    cursor.execute('INSERT INTO authors (name) VALUES (?)', (author_name,))
-    author_id = cursor.lastrowid # Use this to fetch the id of the newly created author
+    author = Author(name = author_name,conn= conn)
+
 
     # Create a magazine
-    cursor.execute('INSERT INTO magazines (name, category) VALUES (?,?)', (magazine_name, magazine_category))
-    magazine_id = cursor.lastrowid # Use this to fetch the id of the newly created magazine
+    magazine = Magazine(name = magazine_name,category = magazine_category,conn = conn)
+    
+  
 
     # Create an article
-    cursor.execute('INSERT INTO articles (title, content, author_id, magazine_id) VALUES (?, ?, ?, ?)',
-                   (article_title, article_content, author_id, magazine_id))
-
-    conn.commit()
+    article = Article(title = article_title, content = article_content,author = author, magazine = magazine,conn = conn)
 
     # Query the database for inserted records. 
     # The following fetch functionality should probably be in their respective models
 
-    cursor.execute('SELECT * FROM magazines')
-    magazines = cursor.fetchall()
-
-    cursor.execute('SELECT * FROM authors')
-    authors = cursor.fetchall()
-
-    cursor.execute('SELECT * FROM articles')
-    articles = cursor.fetchall()
+    print(magazine.article_titles())
 
     conn.close()
+    
 
-    # Display results
+"""    # Display results
     print("\nMagazines:")
     for magazine in magazines:
         print(Magazine(magazine["id"], magazine["name"], magazine["category"]))
 
     print("\nAuthors:")
     for author in authors:
-        print(Author(author["id"], author["name"]))
+        print(Author(author["name"],author["id"]))
 
     print("\nArticles:")
     for article in articles:
-        print(Article(article["id"], article["title"], article["content"], article["author_id"], article["magazine_id"]))
+        print(Article(article["id"], article["title"], article["content"], article["author_id"], article["magazine_id"])) """
 
 if __name__ == "__main__":
     main()
