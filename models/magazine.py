@@ -1,7 +1,7 @@
 from models.author import Author
 
 class Magazine:
-    def __init__(self,name = "john doe", id = None,category = None,conn = None):
+    def __init__(self,name = None, id = None,category = None,conn = None):
         self._id = id
         self._name = name
         self._category = category
@@ -35,6 +35,8 @@ class Magazine:
     def id(self,id):
         if isinstance(id,int):
             self._id = id
+        else:
+            raise TypeError("ID must be an integer")
     
     @property
     def name(self):
@@ -47,8 +49,9 @@ class Magazine:
     
     @name.setter
     def name(self,name):
-        if isinstance(name,str) and 2 <= len(name) <= 16:
-            self._name = name
+        if not (isinstance(name, str) and 2 <= len(name) <= 16):
+            raise ValueError("Name must be a string between 2 and 16 characters")
+        self._name = name
         
     @property
     def category(self):
@@ -64,6 +67,8 @@ class Magazine:
     def category(self,category):
         if isinstance(category,str) and len(category)>0:
             self._category = category
+        else:
+            raise ValueError("Category must be a non-empty string")
 
     def articles(self):
         sql = "SELECT * FROM articles WHERE articles.magazine_id = ?"
@@ -71,7 +76,7 @@ class Magazine:
         return rows
     
     def contributors(self):
-        sql = "SELECT * FROM authors INNER JOIN articles ON authors.id = articles.author_id WHERE articles.magazine_id = ?"
+        sql = "SELECT authors.* FROM authors INNER JOIN articles ON authors.id = articles.author_id WHERE articles.magazine_id = ?"
         rows = self.cursor.execute(sql,(self.id,)).fetchall()
         return rows
 
@@ -87,15 +92,18 @@ class Magazine:
         return [item[1] for item in articles] if articles else None
     
     def contributing_authors(self):
-        moreThanTwo = []
+        moreThanTwo = {}  # Use a dictionary to store unique authors
         contributors = self.contributors()
         for author in contributors:
             sql = "SELECT * FROM articles WHERE articles.author_id = ? and articles.magazine_id = ?"
-            rows = self.cursor.execute(sql,(author[0],self.id))   
-            if len(rows)>2:
-                author_instance = Author(conn=self.conn,id = author[0],name = author[1])
-                moreThanTwo.append(author_instance)
-        return moreThanTwo
+            rows = self.cursor.execute(sql, (author[0], self.id)).fetchall()
+            if len(rows) > 2:
+                author_instance = Author(conn=self.conn, id=author[0], name=author[1])
+                moreThanTwo[author_instance.id] = author_instance  # Store the author instance in the dictionary
+        return list(moreThanTwo.values()) if moreThanTwo else None
+
+
+
 
 
 

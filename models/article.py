@@ -32,8 +32,10 @@ class Article:
         
     @title.setter
     def title(self,title):
-        if isinstance(title,str) and 5 <= len(title) <= 50 and not hasattr(self,"_title"):
+        if isinstance(title,str) and 5 <= len(title) <= 50 and not hasattr(self,"_title") :
             self._title = title
+        else:
+            raise ValueError("Title must be a string between 5 and 50 characters long and can only be set once.")
 
     def author(self):
         sql = "SELECT authors.name FROM articles INNER JOIN authors ON ? = authors.id"

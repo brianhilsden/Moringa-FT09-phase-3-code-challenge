@@ -11,6 +11,14 @@ class Author:
     def __repr__(self):
         return f'<Author {self.name}>'
     
+    def __eq__(self, other):
+        if isinstance(other, Author):
+            return self.id == other.id and self.name == other.name
+        return False
+
+    def __hash__(self):
+        return hash((self.id, self.name))
+    
     def add_author(self):
         sql_check = "SELECT id FROM authors WHERE name = ? LIMIT 1"
         result = self.cursor.execute(sql_check,(self.name,)).fetchone()
@@ -27,9 +35,14 @@ class Author:
         return self._id
     
     @id.setter
-    def id(self,value):
-        if isinstance(id,int):
+    def id(self, value):
+        if value is None:
+            self._id = 0  # Set a default value or handle None case appropriately
+        elif isinstance(value, int):
             self._id = value
+        else:
+            raise ValueError("Invalid ID value")
+
 
     @property
     def name(self): 
@@ -45,9 +58,12 @@ class Author:
     def name(self,name):
         if isinstance(name,str) and len(name) and not hasattr(self,"_name"):
             self._name = name
-    
+        
+        else:
+            raise ValueError("Invalid name value")
+        
     def articles(self):
-        sql = "SELECT * FROM authors INNER JOIN articles ON articles.author_id = ?"
+        sql = "SELECT * FROM articles WHERE author_id = ?"
         rows = self.cursor.execute(sql,(self.id,)).fetchall()
         return rows
     
