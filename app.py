@@ -9,9 +9,12 @@ def main():
     create_tables()
 
 
-
     # Collect user input
-
+    author_name = input("Enter author's name: ")
+    magazine_name = input("Enter magazine name: ")
+    magazine_category = input("Enter magazine category: ")
+    article_title = input("Enter article title: ")
+    article_content = input("Enter article content: ")
 
     # Connect to the database
     conn = get_db_connection()
@@ -23,12 +26,11 @@ def main():
         you can modify it to meet the requirements of your implmentation.
     '''
 
-    # Create an author
-    author = Author(id=1,name="yobra", conn=conn)
-    print(author.id)
-  
-
-
+    # Create an author,magazine,article
+    author = Author(name=author_name,conn=conn)
+    magazine = Magazine(name=magazine_name,category=magazine_category,conn=conn)
+    article = Article(title=article_title,content=article_content,author=author,magazine=magazine,conn=conn)
+    print(magazine.contributors())
 
     conn.close()
     

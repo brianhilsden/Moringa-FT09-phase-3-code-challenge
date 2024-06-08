@@ -60,34 +60,34 @@ class TestModels(unittest.TestCase):
         with self.assertRaises(ValueError):
             author.name = 123
 
-    def test_author_articles(self):
-        author = Author(name="John Doe", conn=self.conn)
-        magazine = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
-        article1 = Article(title="Test Title 1", content="Test Content 1", author=author, magazine=magazine, conn=self.conn)
-        article2 = Article(title="Test Title 2", content="Test Content 2", author=author, magazine=magazine, conn=self.conn)
+    def test_articles(self):
+        author = Author(name="Jane Doe", conn=self.conn)
+        magazine = Magazine(name="Tech Review", category="Technology", conn=self.conn)
+        self.cursor.execute("INSERT INTO articles (title,content, author_id,magazine_id) VALUES ('Article 1','Sports', ?,?)", (author.id,magazine.id))
+        self.conn.commit()
         articles = author.articles()
-        self.assertEqual(len(articles), 2)
-        self.assertIn(article1.id, [article[0] for article in articles])
-        self.assertIn(article2.id, [article[0] for article in articles])
+        self.assertEqual(len(articles), 1)
+        self.assertEqual(articles[0].title, 'Article 1')
 
-    def test_author_magazines(self):
-        author = Author(name="John Doe", conn=self.conn)
-        magazine1 = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
-        magazine2 = Magazine(name="Science Monthly", category="Science", conn=self.conn)
-        article1 = Article(title="Test Title 1", content="Test Content 1", author=author, magazine=magazine1, conn=self.conn)
-        article2 = Article(title="Test Title 2", content="Test Content 2", author=author, magazine=magazine2, conn=self.conn)
+
+    def test_magazines(self):
+        author = Author(name="Jane Doe", conn=self.conn)
+        magazine = Magazine(name="Tech Review", category="Technology", conn=self.conn)
+        self.cursor.execute("INSERT INTO articles (title,content, author_id, magazine_id) VALUES ('Article 1', 'sport', ?,?)", (author.id, magazine.id))
+        self.conn.commit()
         magazines = author.magazines()
-        self.assertEqual(len(magazines), 2)
-        self.assertIn(magazine1.id, [magazine[0] for magazine in magazines])
-        self.assertIn(magazine2.id, [magazine[0] for magazine in magazines])
+        self.assertEqual(len(magazines), 1)
+        self.assertEqual(magazines[0].name, "Tech Review")
+        self.assertEqual(magazines[0].category, "Technology")
 
-    def test_author_get_all_authors(self):
-        author1 = Author(name="John Doe", conn=self.conn)
-        author2 = Author(name="Jane Doe", conn=self.conn)
-        all_authors = Author.get_all_authors(self.cursor)
-        self.assertEqual(len(all_authors), 2)
-        self.assertIn(author1.id, [author[0] for author in all_authors])
-        self.assertIn(author2.id, [author[0] for author in all_authors])
+    def test_get_all_authors(self):
+        self.cursor.execute("INSERT INTO authors (name) VALUES ('Author 1')")
+        self.cursor.execute("INSERT INTO authors (name) VALUES ('Author 2')")
+        self.conn.commit()
+        authors = Author.get_all_authors(self.conn)
+        self.assertEqual(len(authors), 2)
+        self.assertEqual(authors[0].name, 'Author 1')
+        self.assertEqual(authors[1].name, 'Author 2')
 
     def test_magazine_init(self):
         magazine = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
@@ -121,43 +121,41 @@ class TestModels(unittest.TestCase):
             magazine.category = ""
 
     def test_magazine_articles(self):
-        magazine = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
-        author = Author(name="John Doe", conn=self.conn)
-        article1 = Article(title="Test Title 1", content="Test Content 1", author=author, magazine=magazine, conn=self.conn)
-        article2 = Article(title="Test Title 2", content="Test Content 2", author=author, magazine=magazine, conn=self.conn)
+        magazine = Magazine(name="Tech Review", category="Technology", conn=self.conn)
+        author = Author(name="Jane Doe", conn=self.conn)
+        self.cursor.execute("INSERT INTO articles (title,content,author_id, magazine_id) VALUES ('Article 1','tilapia', ?,?)", (author.id,magazine.id))
+        self.conn.commit()
         articles = magazine.articles()
-        self.assertEqual(len(articles), 2)
-        self.assertIn(article1.id, [article[0] for article in articles])
-        self.assertIn(article2.id, [article[0] for article in articles])
-
-    def test_magazine_contributors(self):
-        magazine = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
-        author1 = Author(name="John Doe", conn=self.conn)
-        author2 = Author(name="Jane Doe", conn=self.conn)
-        article1 = Article(title="Test Title 1", content="Test Content 1", author=author1, magazine=magazine, conn=self.conn)
-        article2 = Article(title="Test Title 2", content="Test Content 2", author=author2, magazine=magazine, conn=self.conn)
+        self.assertEqual(len(articles), 1)
+        self.assertEqual(articles[0].title, 'Article 1')
+    def test_contributors(self):
+        magazine = Magazine(name="Tech Review", category="Technology", conn=self.conn)
+        self.cursor.execute("INSERT INTO authors (name) VALUES ('Author 1')")
+        self.cursor.execute("INSERT INTO articles (title,content, author_id, magazine_id) VALUES ('Article 1','sports', 1, ?)", (magazine.id,))
+        self.conn.commit()
         contributors = magazine.contributors()
-        self.assertEqual(len(contributors), 2)
-        self.assertIn(author1.id, [author[0] for author in contributors])
-        self.assertIn(author2.id, [author[0] for author in contributors])
+        self.assertEqual(len(contributors), 1)
+        self.assertEqual(contributors[0].name, 'Author 1')
 
-    def test_magazine_get_all_magazines(self):
-        magazine1 = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
-        magazine2 = Magazine(name="Science Monthly", category="Science", conn=self.conn)
-        all_magazines = Magazine.get_all_magazines(self.cursor)
-        self.assertEqual(len(all_magazines), 2)
-        self.assertIn(magazine1.id, [magazine[0] for magazine in all_magazines])
-        self.assertIn(magazine2.id, [magazine[0] for magazine in all_magazines])
+    def test_get_all_magazines(self):
+        self.cursor.execute("INSERT INTO magazines (name, category) VALUES ('Magazine 1', 'Category 1')")
+        self.cursor.execute("INSERT INTO magazines (name, category) VALUES ('Magazine 2', 'Category 2')")
+        self.conn.commit()
+        magazines = Magazine.get_all_magazines(self.conn)
+        self.assertEqual(len(magazines), 2)
+        self.assertEqual(magazines[0].name, 'Magazine 1')
+        self.assertEqual(magazines[0].category, 'Category 1')
+        self.assertEqual(magazines[1].name, 'Magazine 2')
+        self.assertEqual(magazines[1].category, 'Category 2')
 
     def test_magazine_article_titles(self):
-        magazine = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
-        author = Author(name="John Doe", conn=self.conn)
-        article1 = Article(title="Test Title 1", content="Test Content 1", author=author, magazine=magazine, conn=self.conn)
-        article2 = Article(title="Test Title 2", content="Test Content 2", author=author, magazine=magazine, conn=self.conn)
+        author = Author(name="Jane Doe", conn=self.conn)
+        magazine = Magazine(name="Tech Review", category="Technology", conn=self.conn)
+        self.cursor.execute("INSERT INTO articles (title,content,author_id, magazine_id) VALUES ('Article 1','Dagaa', ?,?)", (author.id,magazine.id,))
+        self.cursor.execute("INSERT INTO articles (title,content,author_id, magazine_id) VALUES ('Article 2','Omena', ?,?)", (author.id,magazine.id,))
+        self.conn.commit()
         titles = magazine.article_titles()
-        self.assertEqual(len(titles), 2)
-        self.assertIn("Test Title 1", titles)
-        self.assertIn("Test Title 2", titles)
+        self.assertEqual(titles, ['Article 1', 'Article 2'])
 
     def test_magazine_contributing_authors(self):
         magazine = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
@@ -194,17 +192,21 @@ class TestModels(unittest.TestCase):
         with self.assertRaises(ValueError):
             article.title = "Already Set"  # Cannot set title twice
 
-    def test_article_author(self):
-        self.author = Author(name="John Doe", conn=self.conn)
-        self.magazine = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
-        article = Article(title="Test Title", content="Test Content", author=self.author, magazine=self.magazine, conn=self.conn)
-        self.assertEqual(article.author(), self.author.name)
+    def test_author(self):
+        author = Author(name="Jane Doe", conn=self.conn)
+        magazine = Magazine(name="Tech Review", category="Technology", conn=self.conn)
+        article = Article(title="Article Title", content="Article Content", author=author, magazine=magazine, conn=self.conn)
+        returned_author = article.author()
+        self.assertEqual(returned_author.name, "Jane Doe")
 
-    def test_article_magazine(self):
-        self.author = Author(name="John Doe", conn=self.conn)    
-        self.magazine = Magazine(name="Tech Weekly", category="Technology", conn=self.conn)
-        article = Article(title="Test Title", content="Test Content", author=self.author, magazine=self.magazine, conn=self.conn)
-        self.assertEqual(article.magazine(), self.magazine.name)
+
+    def test_magazine(self):
+        author = Author(name="Jane Doe", conn=self.conn)
+        magazine = Magazine(name="Tech Review", category="Technology", conn=self.conn)
+        article = Article(title="Article Title", content="Article Content", author=author, magazine=magazine, conn=self.conn)
+        returned_magazine = article.magazine()
+        self.assertEqual(returned_magazine.name, "Tech Review")
+        self.assertEqual(returned_magazine.category, "Technology")
 
 
 

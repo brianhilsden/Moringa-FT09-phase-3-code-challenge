@@ -71,35 +71,37 @@ class Magazine:
             raise ValueError("Category must be a non-empty string")
 
     def articles(self):
+        from models.article import Article
         sql = "SELECT * FROM articles WHERE articles.magazine_id = ?"
         rows = self.cursor.execute(sql,(self.id,)).fetchall()
-        return rows
+        return [Article(id=row[0],title=row[1],content=row[2],author_id=row[3],magazine_id=row[4],conn=self.conn) for row in rows]
     
     def contributors(self):
-        sql = "SELECT authors.* FROM authors INNER JOIN articles ON authors.id = articles.author_id WHERE articles.magazine_id = ?"
+        from models.author import Author
+        sql = "SELECT DISTINCT authors.* FROM authors INNER JOIN articles ON authors.id = articles.author_id WHERE articles.magazine_id = ?"
         rows = self.cursor.execute(sql,(self.id,)).fetchall()
-        return rows
+        return [Author(name=author[1],conn=self.conn) for author in rows]
 
 
     @classmethod
-    def get_all_magazines(cls,cursor):
+    def get_all_magazines(cls,conn):
         sql = "SELECT * FROM magazines"
+        cursor = conn.cursor()
         magazines = cursor.execute(sql).fetchall()
-        return magazines
+        return [cls(id=row[0],name=row[1],category=row[2],conn=conn) for row in magazines]
     
     def article_titles(self):
         articles = self.articles()
-        return [item[1] for item in articles] if articles else None
+        return [item.title for item in articles] if articles else None
     
     def contributing_authors(self):
         moreThanTwo = {}  # Use a dictionary to store unique authors
         contributors = self.contributors()
         for author in contributors:
             sql = "SELECT * FROM articles WHERE articles.author_id = ? and articles.magazine_id = ?"
-            rows = self.cursor.execute(sql, (author[0], self.id)).fetchall()
-            if len(rows) > 2:
-                author_instance = Author(conn=self.conn, id=author[0], name=author[1])
-                moreThanTwo[author_instance.id] = author_instance  # Store the author instance in the dictionary
+            rows = self.cursor.execute(sql, (author.id, self.id)).fetchall()
+            if len(rows) > 2:       
+                moreThanTwo[author.id] = author  # Store the author instance in the dictionary
         return list(moreThanTwo.values()) if moreThanTwo else None
 
 

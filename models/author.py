@@ -63,18 +63,21 @@ class Author:
             raise ValueError("Invalid name value")
         
     def articles(self):
+        from models.article import Article
         sql = "SELECT * FROM articles WHERE author_id = ?"
         rows = self.cursor.execute(sql,(self.id,)).fetchall()
-        return rows
+        return [Article(id=row[0],title=row[1],content=row[2],author_id=row[3],magazine_id=row[4],conn=self.conn) for row in rows]
     
     def magazines(self):
-        sql = """SELECT * FROM magazines INNER JOIN articles ON articles.magazine_id = magazines.id WHERE articles.author_id = ?"""
+        from models.magazine import Magazine
+        sql = """SELECT DISTINCT magazines.id, magazines.name, magazines.category FROM magazines INNER JOIN articles ON articles.magazine_id = magazines.id WHERE articles.author_id = ?"""
         rows = self.cursor.execute(sql,(self.id,)).fetchall()
-        return rows
+        return [Magazine(id=row[0],name=row[1],category=row[2],conn=self.conn) for row in rows]
 
     @classmethod
-    def get_all_authors(cls,cursor):
+    def get_all_authors(cls,conn):
         sql = "SELECT * FROM authors"
+        cursor = conn.cursor()
         authors = cursor.execute(sql).fetchall()
-        return authors
+        return [cls(name=author[1],conn=conn) for author in authors]
 
