@@ -1,4 +1,5 @@
 class Article:
+    all = {}
     def __init__(self,id=None, title=None, content=None, author=None, magazine=None,conn = None,author_id=None,magazine_id=None):
         self.id = id
         self.title = title
@@ -20,6 +21,7 @@ class Article:
         self.cursor.execute(sql,(self.title,self.content,self.author_id,self.magazine_id))
         self.conn.commit()
         self.id = self.cursor.lastrowid
+        type(self).all[self.id] = self
 
     @property
     def title(self):
@@ -56,11 +58,22 @@ class Article:
         else:
             return None
 
+    @classmethod
+    def instance_from_db(cls,row):
+        article = cls.all.get(row[0])
+        if article:
+            article.content = row[2]
+
+        else:
+            article = cls(title = row[1],content = row[2], author_id = row[3], magazine_id = row[4])
+            article.id = row[0]
+            cls.all[article.id] = article
+        return article
 
     @classmethod
     def get_all_articles(cls,conn):
         sql = "SELECT * FROM articles"
         cursor = conn.cursor()
         articles = cursor.execute(sql).fetchall()
-        return [cls(id=row[0],title=row[1],content=row[2],author_id=row[3],magazine_id=row[4],conn=conn) for row in articles]
+        return [cls.instance_from_db(row) for row in articles]
 

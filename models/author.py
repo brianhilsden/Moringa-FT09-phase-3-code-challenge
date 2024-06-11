@@ -20,6 +20,7 @@ class Author:
         return hash((self.id, self.name))
     
     def add_author(self):
+   
         sql_check = "SELECT id FROM authors WHERE name = ? LIMIT 1"
         result = self.cursor.execute(sql_check,(self.name,)).fetchone()
         if result:

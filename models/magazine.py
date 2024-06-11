@@ -9,7 +9,7 @@ class Magazine:
         if conn:
             self.cursor = self.conn.cursor()
             self.add_to_database()
-
+    
 
     def __repr__(self):
         return f'<Magazine {self.name}>'
