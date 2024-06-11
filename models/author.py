@@ -48,7 +48,7 @@ class Author:
     @property
     def name(self): 
         if not hasattr(self,"_name"):
-            sql = "SELECT name FROM author WHERE id = ?"
+            sql = "SELECT name FROM authors WHERE id = ?"
             self.cursor.execute(sql,(self.id,))
             row = self.cursor.fetchone()
             if row:
