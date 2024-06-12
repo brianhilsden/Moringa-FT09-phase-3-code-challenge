@@ -1,4 +1,5 @@
 class Author:
+    all = {}
     def __init__(self,id=None, name=None, conn = None):
         self.name = name
         self.conn = conn
@@ -30,6 +31,7 @@ class Author:
             self.cursor.execute(sql, (self.name,))
             self.conn.commit()
             self._id = self.cursor.lastrowid
+            type(self).all[self.id] = self
     
     @property
     def id(self):
@@ -75,6 +77,34 @@ class Author:
         rows = self.cursor.execute(sql,(self.id,)).fetchall()
         return [Magazine(id=row[0],name=row[1],category=row[2],conn=self.conn) for row in rows]
 
+
+    @classmethod
+    def instance_from_db(cls, row, conn):
+
+        # Check the dictionary for an existing instance using the row's primary key
+        author = cls.all.get(row[0])
+        if author:
+            # ensure attributes match row values in case local instance was modified
+            pass
+        else:
+            # not in dictionary, create new instance and add to dictionary
+            author = cls(name = row[1], conn = conn)
+            author.id = row[0]
+            cls.all[author.id] = author
+        return author
+
+    @classmethod
+    def find_by_name(cls, conn, name):
+        sql = """
+            SELECT *
+            FROM authors
+            WHERE name is ?
+        """
+        cursor = conn.cursor()
+
+        row = cursor.execute(sql, (name,)).fetchone()
+        return cls.instance_from_db(row,conn) if row else None
+    
     @classmethod
     def get_all_authors(cls,conn):
         sql = "SELECT * FROM authors"

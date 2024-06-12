@@ -1,71 +1,87 @@
 from database.setup import create_tables
-from database.connection import get_db_connection
-from models.article import Article
-from models.author import Author
-from models.magazine import Magazine
+
+from helpers import (
+    exit_program,
+    add_entry,
+    author_articles,
+    author_magazines,
+    all_authors,
+    magazine_articles,
+    magazine_contributors,
+    article_titles,
+    contributing_authors,
+    all_magazines,
+    author,
+    magazine,
+    all_articles
+
+)
 
 def main():
-    # Initialize the database and create tables
     create_tables()
+    while True:
+        menu()
+        choice = input("> ")
+        if choice == "0":
+            exit_program()
+        elif choice == "1":
+            inner_menu(add_entry)
+        elif choice == "2":
+            inner_menu(author_articles)
+        elif choice == "3":
+            inner_menu(author_magazines)
+        elif choice == "4":
+            inner_menu(all_authors)
+        elif choice == "5":
+            inner_menu(magazine_articles)
+        elif choice == "6":
+            inner_menu(magazine_contributors)
+        elif choice == "7":
+            inner_menu(article_titles)
+        elif choice == "8":
+            inner_menu(contributing_authors)
+        elif choice == "9":
+            inner_menu(all_magazines)
+        elif choice == "10":
+            inner_menu(author)
+        elif choice == "11":
+            inner_menu(magazine)
+        elif choice == "12":
+            inner_menu(all_articles)
+        else:
+            print("Invalid choice")
 
-    # Collect user input
-    author_name = input("Enter author's name: ")
-    magazine_name = input("Enter magazine name: ")
-    magazine_category = input("Enter magazine category: ")
-    article_title = input("Enter article title: ")
-    article_content = input("Enter article content: ")
+def menu():
+    print("Please select an option:")
+    print("0. Exit the program")
+    print("1. Add new entry")
+    print("2. List specific author's articles")
+    print("3. List specific author's magazines")
+    print("4: List all authors")
+    print("5: List specific magazine's articles")
+    print("6: List specific magazine's contributors")
+    print("7. List specific magazine's article titles")
+    print("8. List specific magazine's contributing authors")
+    print("9. List all magazines")
+    print("10: Get author of specific article")
+    print("11: Get magazine of specific article")
+    print("12: List all articles")
 
-    # Connect to the database
-    conn = get_db_connection()
-    cursor = conn.cursor()
+def inner_menu(action):
+    while True:
+        action()
+        print("\nEnter 't' to try again, 'b' to go back to main menu or 'q' to quit.")
+        choice = input("> ")
+        if choice == "b":
+            break
+        elif choice == "q":
+            exit_program()
+        elif choice == "t":
+            pass
+        else:
+            print("Invalid entry")
 
-
-    '''
-        Articles methods available:
-            - author()                  Returns author of the article  (python class object)
-            - magazine()                Returns magazine in which the article is contained  (python class object)
-            - get_all_articles(conn)    Takes conn as argument, returns list of all the articles  (python class objects)
-
-
-        Magazine methods available:
-            - articles()                Returns list of all articles in the magazine  (python class objects)
-            - contributors()            Returns list of all authors who have written articles in the magazine  (python class objects)
-            - article_titles()          Returns string titles of the articles in the magazine  (strings)
-            - contributing_authors()    Returns list of all authors who have written more than two articles in the magazine (python class objects)
-            - get_all_magazines(conn)   Takes conn as argument, returns list of all the magazines  (python class objects)
-
-
-        Author methods available:
-            - articles()                Returns list of all articles the author has written  (python class objects)
-            - magazines()               Returns list of all magazines the author has contributed to  (python class objects)
-            - get_all_authors(conn)     Takes conna as argument, returns list of all authors  (python class objects)
-    '''
-
-
-    # Create an author,magazine,article
-    author = Author(name=author_name,conn=conn)
-    magazine = Magazine(name=magazine_name,category=magazine_category,conn=conn)
-    article = Article(title=article_title,content=article_content,author=author,magazine=magazine,conn=conn)
     
-    magazines = Magazine.get_all_magazines(conn)
-    authors = Author.get_all_authors(conn)
-    articles = Article.get_all_articles(conn)
 
-    conn.close()
-
-    # Display results for all magazines,authors,articles
-    print("\nMagazines:")
-    for magazine in magazines:
-        print(magazine)
-
-    print("\nAuthors:")
-    for author in authors:
-        print(author)
-
-    print("\nArticles:")
-    for article in articles:
-        print(article)
-    
-    
 if __name__ == "__main__":
     main()

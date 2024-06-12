@@ -17,11 +17,16 @@ class Article:
     
 
     def add_to_database(self):
-        sql = "INSERT INTO articles (title,content,author_id,magazine_id) VALUES (?,?,?,?)"
-        self.cursor.execute(sql,(self.title,self.content,self.author_id,self.magazine_id))
-        self.conn.commit()
-        self.id = self.cursor.lastrowid
-        type(self).all[self.id] = self
+        sql_check = "SELECT id FROM articles WHERE title = ? "
+        result = self.cursor.execute(sql_check,(self.title,)).fetchone()
+        if result:
+            self.id = result[0]
+        else:
+            sql = "INSERT INTO articles (title,content,author_id,magazine_id) VALUES (?,?,?,?)"
+            self.cursor.execute(sql,(self.title,self.content,self.author_id,self.magazine_id))
+            self.conn.commit()
+            self.id = self.cursor.lastrowid
+            type(self).all[self.id] = self
 
     @property
     def title(self):
@@ -59,21 +64,34 @@ class Article:
             return None
 
     @classmethod
-    def instance_from_db(cls,row):
+    def instance_from_db(cls,row,conn):
         article = cls.all.get(row[0])
         if article:
             article.content = row[2]
 
         else:
-            article = cls(title = row[1],content = row[2], author_id = row[3], magazine_id = row[4])
+            article = cls(title = row[1],content = row[2], author_id = row[3], magazine_id = row[4],conn = conn)
             article.id = row[0]
             cls.all[article.id] = article
         return article
 
     @classmethod
+    def find_by_id(cls, conn, id):
+        sql = """
+            SELECT *
+            FROM articles
+            WHERE id is ?
+        """
+        cursor = conn.cursor()
+
+        row = cursor.execute(sql, (id,)).fetchone()
+        return cls.instance_from_db(row,conn) if row else None
+    
+    @classmethod
     def get_all_articles(cls,conn):
         sql = "SELECT * FROM articles"
         cursor = conn.cursor()
         articles = cursor.execute(sql).fetchall()
-        return [cls.instance_from_db(row) for row in articles]
+        return [cls.instance_from_db(row,conn) for row in articles]
 
+    

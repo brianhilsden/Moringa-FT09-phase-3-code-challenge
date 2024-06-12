@@ -1,6 +1,7 @@
 from models.author import Author
 
 class Magazine:
+    all = {}
     def __init__(self,name = None, id = None,category = None,conn = None):
         self._id = id
         self._name = name
@@ -24,6 +25,7 @@ class Magazine:
             self.cursor.execute(sql,(self.name,self.category))
             self.conn.commit()
             self.id = self.cursor.lastrowid
+            type(self).all[self.id] = self
 
         
 
@@ -84,6 +86,33 @@ class Magazine:
 
 
     @classmethod
+    def instance_from_db(cls, row, conn):
+
+        # Check the dictionary for an existing instance using the row's primary key
+        magazine = cls.all.get(row[0])
+        if magazine:
+            # ensure attributes match row values in case local instance was modified
+            pass
+        else:
+            # not in dictionary, create new instance and add to dictionary
+            magazine = cls(name = row[1],category = row[2], conn = conn)
+            magazine.id = row[0]
+            cls.all[magazine.id] = magazine
+        return magazine
+
+    @classmethod
+    def find_by_name(cls, conn, name):
+        sql = """
+            SELECT *
+            FROM magazines
+            WHERE name is ?
+        """
+        cursor = conn.cursor()
+
+        row = cursor.execute(sql, (name,)).fetchone()
+        return cls.instance_from_db(row,conn) if row else None
+
+    @classmethod
     def get_all_magazines(cls,conn):
         sql = "SELECT * FROM magazines"
         cursor = conn.cursor()
@@ -94,6 +123,7 @@ class Magazine:
         articles = self.articles()
         return [item.title for item in articles] if articles else None
     
+
     def contributing_authors(self):
         moreThanTwo = {}  # Use a dictionary to store unique authors
         contributors = self.contributors()
